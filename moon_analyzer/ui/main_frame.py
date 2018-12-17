@@ -9,8 +9,6 @@ from moon_analyzer.core.coope_fit import coope_fit_method
 
 
 class MainFrame(ttk.Frame):
-    # TODO: Ajouter le zoom : https://stackoverflow.com/questions/41656176/tkinter-canvas-zoom-move-pan/48137257#48137257
-
     def __init__(self, master):
         ttk.Frame.__init__(self, master)
 
@@ -48,6 +46,11 @@ class MainFrame(ttk.Frame):
         self.pack(fill="both", expand=True)
 
     def _open_image(self):
+        if self.canvas is not None:
+            self._clean_canvas()
+            self.canvas.pack_forget()
+            self.canvas = None
+
         filename = askopenfilename(title="Choisissez une image", filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
 
         if filename != "" and filename is not None and os.path.exists(filename):
