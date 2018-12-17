@@ -71,7 +71,7 @@ class MainFrame(ttk.Frame):
 
         if hash not in self.points.keys():
             self.points[hash] = point
-            self.ovals[hash] = self.canvas.create_oval(event.x - 4, event.y - 4, event.x + 4, event.y + 4, fill="light green")
+            self.ovals[hash] = self.canvas.create_oval(event.x - 4, event.y - 4, event.x + 4, event.y + 4, fill="lawn green")
 
             self.status.set("X = {}; Y = {}".format(event.x, event.y))
 
@@ -130,6 +130,8 @@ class MainFrame(ttk.Frame):
         self.points.clear()
         self.canvas.delete(*self.ovals.values())
         self.ovals.clear()
+
+        self._check_compute_btn_state()
 
     def _clean_canvas(self):
         self._clean_points()
