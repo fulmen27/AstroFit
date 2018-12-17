@@ -14,7 +14,7 @@ class MainFrame(ttk.Frame):
 
         self.compute_btn = None
         self.status = tk.StringVar(self, "")
-        self.image = None
+        self.image = {}
         self.canvas = None
 
         self.points = {}
@@ -54,28 +54,35 @@ class MainFrame(ttk.Frame):
         filename = askopenfilename(title="Choisissez une image", filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
 
         if filename != "" and filename is not None and os.path.exists(filename):
-            self.image = ImageTk.PhotoImage(Image.open(filename))
+            self.image["filename"] = filename
+            self.image["photo"] = ImageTk.PhotoImage(Image.open(filename))
             self._set_canvas()
 
     def _set_canvas(self):
-        if self.image is not None:
-            self.canvas = tk.Canvas(self, width=self.image.width(), height=self.image.height(), bg="light yellow")
-            self.canvas.create_image(self.image.width() / 2, self.image.height() / 2, image=self.image)
+        if "photo" in self.image and self.image["photo"] is not None:
+            photo = self.image["photo"]
+            self.canvas = tk.Canvas(self, width=photo.width(), height=photo.height(), bg="light yellow")
+            self.canvas.create_image(photo.width() / 2, photo.height() / 2, image=photo)
             self.canvas.bind("<Button-1>", self._on_left_click)
             self.canvas.bind("<Button-3>", self._on_right_click)
             self.canvas.pack()
 
     def _on_left_click(self, event):
-        point = (event.x, event.y)
-        hash = point.__hash__()
-
-        if hash not in self.points.keys():
-            self.points[hash] = point
-            self.ovals[hash] = self.canvas.create_oval(event.x - 4, event.y - 4, event.x + 4, event.y + 4, fill="lawn green")
-
+        if self._add_point(event.x, event.y, "lawn green"):
             self.status.set("X = {}; Y = {}".format(event.x, event.y))
 
+    def _add_point(self, x, y, color):
+        point = (x, y)
+        hash_point = point.__hash__()
+
+        if hash_point not in self.points.keys():
+            self.points[hash_point] = point
+            self.ovals[hash_point] = self.canvas.create_oval(x - 4, y - 4, x + 4, y + 4, fill=color)
             self._check_compute_btn_state()
+
+            return True
+
+        return False
 
     def _on_right_click(self, event):
         point = (event.x, event.y)
