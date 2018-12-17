@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
 
 from moon_analyzer.core.coope_fit import coope_fit_method
+from moon_analyzer.core.threshold import threshold_image
 
 
 class MainFrame(ttk.Frame):
@@ -15,6 +16,8 @@ class MainFrame(ttk.Frame):
         self.compute_btn = None
         self.status = tk.StringVar(self, "")
         self.image = {}
+        self.threshold = tk.BooleanVar(self, False)
+        self.threshold_value = tk.IntVar(self, 128)
         self.canvas = None
 
         self.points = {}
@@ -23,8 +26,15 @@ class MainFrame(ttk.Frame):
         self.shape = {}
 
         self._set_ui()
+        self._open_image()
 
     def _set_ui(self):
+        # Geometry
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
         # Menu
         menu_bar = tk.Menu(self)
 
@@ -36,14 +46,23 @@ class MainFrame(ttk.Frame):
 
         self.master.config(menu=menu_bar)
 
-        # Compute button
-        self.compute_btn = ttk.Button(self, text="Calculer", command=self._on_compute, state=tk.DISABLED)
-        self.compute_btn.pack()
+        # Buttons
+        buttons_frame = ttk.Frame(self)
+
+        # ttk.Button(buttons_frame, text="Points automatiques", command=self._auto_points, state=tk.NORMAL).pack(fill=tk.BOTH)
+
+        self.compute_btn = ttk.Button(buttons_frame, text="Calculer", command=self._on_compute, state=tk.DISABLED)
+        self.compute_btn.pack(fill=tk.BOTH)
+
+        ttk.Checkbutton(buttons_frame, text="Seuillage", variable=self.threshold, command=self._on_threshold).pack(fill=tk.BOTH)
+        ttk.Spinbox(buttons_frame, from_=0, to=255, textvariable=self.threshold_value, command=self._on_threshold_value).pack(fill=tk.BOTH)
+
+        buttons_frame.grid(column=1, row=0, sticky="nsew")
 
         # Status bar
-        tk.Label(self, textvariable=self.status, bd=1, relief=tk.SUNKEN, anchor=tk.W).pack(side=tk.BOTTOM, fill=tk.X)
+        tk.Label(self, textvariable=self.status, bd=1, relief=tk.SUNKEN, anchor=tk.W).grid(column=0, row=2, columnspan=2, sticky="sew")
 
-        self.pack(fill="both", expand=True)
+        self.grid(column=0, row=0, sticky="nsew")
 
     def _open_image(self):
         if self.canvas is not None:
@@ -55,21 +74,27 @@ class MainFrame(ttk.Frame):
 
         if filename != "" and filename is not None and os.path.exists(filename):
             self.image["filename"] = filename
-            self.image["photo"] = ImageTk.PhotoImage(Image.open(filename))
+            self.image["pil"] = Image.open(filename)
+            self.image["photo"] = ImageTk.PhotoImage(self.image["pil"])
             self._set_canvas()
 
     def _set_canvas(self):
         if "photo" in self.image and self.image["photo"] is not None:
             photo = self.image["photo"]
             self.canvas = tk.Canvas(self, width=photo.width(), height=photo.height(), bg="light yellow")
-            self.canvas.create_image(photo.width() / 2, photo.height() / 2, image=photo)
+            self.image["canvas"] = self.canvas.create_image(photo.width() / 2, photo.height() / 2, image=photo)
             self.canvas.bind("<Button-1>", self._on_left_click)
             self.canvas.bind("<Button-3>", self._on_right_click)
-            self.canvas.pack()
+            self.canvas.grid(column=0, row=0, sticky="nsew")
 
     def _on_left_click(self, event):
         if self._add_point(event.x, event.y, "lawn green"):
             self.status.set("X = {}; Y = {}".format(event.x, event.y))
+
+    def _auto_points(self):
+        points = ([255, 255], [355, 355])
+        for point in points:
+            self._add_point(point[0], point[1], "cyan")
 
     def _add_point(self, x, y, color):
         point = (x, y)
@@ -81,7 +106,6 @@ class MainFrame(ttk.Frame):
             self._check_compute_btn_state()
 
             return True
-
         return False
 
     def _on_right_click(self, event):
@@ -140,6 +164,26 @@ class MainFrame(ttk.Frame):
 
         self._check_compute_btn_state()
 
-    def _clean_canvas(self):
+    def _clean_canvas(self, clean_image=False):
         self._clean_points()
         self._clean_shape()
+
+        if clean_image:
+            self.canvas.delete(self.image["canvas"])
+
+    def _change_image(self):
+        self.canvas.itemconfig(self.image["canvas"], image=self.image["photo"])
+
+    def _on_threshold(self):
+        if self.canvas is not None and "pil" in self.image:
+            if self.threshold.get():
+                self.image["photo"] = ImageTk.PhotoImage(threshold_image(self.image["pil"], self.threshold_value.get()))
+            else:
+                self.image["pil"] = Image.open(self.image["filename"])
+                self.image["photo"] = ImageTk.PhotoImage(self.image["pil"])
+
+        self._change_image()
+
+    def _on_threshold_value(self):
+        if self.threshold.get():  # On ne réactualise pas l'image inutilement si on est pas en mode seuillage.
+            self._on_threshold()
