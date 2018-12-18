@@ -7,6 +7,7 @@ from tkinter.filedialog import askopenfilename
 
 from moon_analyzer.core.adjust_position import adjust_position
 from moon_analyzer.core.coope_fit import coope_fit_method
+from moon_analyzer.core.plot import show_plot
 from moon_analyzer.core.threshold import threshold_image
 
 
@@ -55,6 +56,9 @@ class MainFrame(ttk.Frame):
 
         self.compute_btn = ttk.Button(buttons_frame, text="Calculer", command=self._on_compute, state=tk.DISABLED)
         self.compute_btn.pack(fill=tk.BOTH)
+
+        self.plot_btn = ttk.Button(buttons_frame, text="Plot", command=self._on_plot, state=tk.DISABLED)
+        self.plot_btn.pack(fill=tk.BOTH)
 
         ttk.Checkbutton(buttons_frame, text="Aimant", variable=self.magnet).pack(fill=tk.BOTH)
 
@@ -147,7 +151,7 @@ class MainFrame(ttk.Frame):
     def _on_compute(self):
         center, radius = coope_fit_method(*self._dispatch_coordinates())
 
-        self.status.set("Rayon : {} pixels".format(radius))
+        self.status.set("Rayon : {} pixels, Centre : ({}, {})".format(radius, *center))
         print("Centre : ({}; {})".format(*center))
         print(self.status.get())
 
@@ -155,6 +159,13 @@ class MainFrame(ttk.Frame):
         self.shape["outline"] = self.canvas.create_oval(center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius,
                                                         outline="red", width=2)
         self.shape["center"] = self.canvas.create_oval(center[0] - 4, center[1] - 4, center[0] + 4, center[1] + 4, fill="red")
+
+        self.shape["Radius"] = radius
+        self.shape["Center"] = center
+        self.plot_btn.config(state=tk.NORMAL)
+
+    def _on_plot(self):
+        show_plot(self.shape["Radius"], *self.shape["Center"], self.points, self.image["pil"].size, self.image["filename"])
 
     def _clean_shape(self):
         if "outline" in self.shape and self.shape["outline"] is not None:
