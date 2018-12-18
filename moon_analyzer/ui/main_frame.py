@@ -5,6 +5,7 @@ import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
 
+from moon_analyzer.core.adjust_position import adjust_position
 from moon_analyzer.core.coope_fit import coope_fit_method
 from moon_analyzer.core.threshold import threshold_image
 
@@ -16,6 +17,7 @@ class MainFrame(ttk.Frame):
         self.compute_btn = None
         self.status = tk.StringVar(self, "")
         self.image = {}
+        self.magnet = tk.BooleanVar(self, True)
         self.threshold = tk.BooleanVar(self, False)
         self.threshold_value = tk.IntVar(self, 128)
         self.canvas = None
@@ -54,6 +56,8 @@ class MainFrame(ttk.Frame):
         self.compute_btn = ttk.Button(buttons_frame, text="Calculer", command=self._on_compute, state=tk.DISABLED)
         self.compute_btn.pack(fill=tk.BOTH)
 
+        ttk.Checkbutton(buttons_frame, text="Aimant", variable=self.magnet).pack(fill=tk.BOTH)
+
         ttk.Checkbutton(buttons_frame, text="Seuillage", variable=self.threshold, command=self._on_threshold).pack(fill=tk.BOTH)
         ttk.Spinbox(buttons_frame, from_=0, to=255, textvariable=self.threshold_value, command=self._on_threshold_value).pack(fill=tk.BOTH)
 
@@ -76,6 +80,7 @@ class MainFrame(ttk.Frame):
             self.image["filename"] = filename
             self.image["pil"] = Image.open(filename)
             self.image["photo"] = ImageTk.PhotoImage(self.image["pil"])
+            self.image["threshold_static"] = threshold_image(self.image["pil"], 100)  # Utilisé pour placer les points précisément
             self._set_canvas()
 
     def _set_canvas(self):
@@ -88,8 +93,10 @@ class MainFrame(ttk.Frame):
             self.canvas.grid(column=0, row=0, sticky="nsew")
 
     def _on_left_click(self, event):
-        if self._add_point(event.x, event.y, "lawn green"):
-            self.status.set("X = {}; Y = {}".format(event.x, event.y))
+        x, y = adjust_position(event.x, event.y, self.image["threshold_static"]) if self.magnet.get() else (event.x, event.y)
+
+        if self._add_point(x, y, "lawn green"):
+            self.status.set("X = {}; Y = {}".format(x, y))
 
     def _auto_points(self):
         points = ([255, 255], [355, 355])
