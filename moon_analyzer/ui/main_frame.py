@@ -158,21 +158,22 @@ class MainFrame(ttk.Frame):
         self._clean_shape()
         self.shape["outline"] = self.canvas.create_oval(center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius,
                                                         outline="red", width=2)
-        self.shape["center"] = self.canvas.create_oval(center[0] - 4, center[1] - 4, center[0] + 4, center[1] + 4, fill="red")
+        self.shape["center_oval"] = self.canvas.create_oval(center[0] - 4, center[1] - 4, center[0] + 4, center[1] + 4, fill="red")
 
-        self.shape["Radius"] = radius
-        self.shape["Center"] = center
+        self.shape["radius"] = radius
+        self.shape["center"] = center
         self.plot_btn.config(state=tk.NORMAL)
 
     def _on_plot(self):
-        show_plot(self.shape["Radius"], *self.shape["Center"], self.points, self.image["pil"].size, self.image["filename"])
+        show_plot(self.shape["radius"], *self.shape["center"], self.points, self.image["pil"].size, self.image["filename"])
 
     def _clean_shape(self):
         if "outline" in self.shape and self.shape["outline"] is not None:
             self.canvas.delete(self.shape["outline"])
 
-        if "center" in self.shape and self.shape["center"] is not None:
-            self.canvas.delete(self.shape["center"])
+        if "center_oval" in self.shape and self.shape["center_oval"] is not None:
+            self.canvas.delete(self.shape["center_oval"])
+        self.plot_btn.config(state=tk.DISABLED)
 
     def _clean_points(self):
         self.status.set("")
