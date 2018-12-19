@@ -5,10 +5,10 @@ import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
 
-from moon_analyzer.core.adjust_position import adjust_position
-from moon_analyzer.core.coope_fit import coope_fit_method
-from moon_analyzer.core.plot import show_plot
-from moon_analyzer.core.threshold import threshold_image
+from astrofit.core.adjust_position import adjust_position
+from astrofit.core.coope_fit import coope_fit_method
+from astrofit.core.plot import show_plot
+from astrofit.core.threshold import threshold_image
 
 
 class MainFrame(ttk.Frame):

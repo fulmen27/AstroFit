@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from moon_analyzer.ui.main_frame import MainFrame
+from astrofit.ui.main_frame import MainFrame
 
 
 class App(tk.Tk):
